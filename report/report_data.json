@@ -1,0 +1,275 @@
+{
+  "title": "MyDoom",
+  "subtitle": "Win32/Mydoom family - historical analysis, evidence review, ATT&CK mapping, IOC pack and defensive detections",
+  "version": "2.0",
+  "date": "2026-09-06",
+  "author": "Michel Di Vincenzo",
+  "classification": "TLP:CLEAR",
+  "sections": [
+    {
+      "number": "1",
+      "title": "Analyst Assessment",
+      "items": [
+        {"type": "callout", "kind": "good", "title": "Assessment in one sentence", "text": "MyDoom is best understood as a mass-mailing worm family with P2P propagation in some variants, durable Windows persistence, a backdoor capable of proxying and secondary payload transfer, and variant-specific denial-of-service behavior. The strongest detection strategy is behavioral correlation, not a single historical hash."},
+        {"type": "h2", "text": "Key judgments"},
+        {"type": "table", "widths": [78, 24, 70], "rows": [
+          ["Judgment", "Confidence", "Why it matters"],
+          ["Email propagation, address harvesting and self-contained SMTP behavior are core family characteristics.", "High", "Useful for network hunting even when file hashes change."],
+          ["Run-key persistence and a backdoor DLL are well documented across authoritative historical analyses.", "High", "Strong host-level correlation points."],
+          ["MyDoom.A uses the first available TCP port in 3127-3198 for its backdoor.", "High", "A port hit is a pivot, not standalone proof."],
+          ["The widely repeated ~$38B damage figure is historical and methodologically difficult to audit.", "Medium", "The report does not present it as a precise audited loss."],
+          ["The 1.1% prevalence figure belongs to Unit 42 data from 2015-2019, not to 2025/2026.", "High", "Corrects a time-context error in the previous edition."]
+        ]},
+        {"type": "h2", "text": "Scope boundary"},
+        {"type": "p", "text": "This report is a defensive analysis package. It contains historical behavior, IOCs, YARA/Sigma detections and response guidance. It does not include a live MyDoom binary, weaponized source code, exploit instructions or instructions for using the historical backdoor."},
+        {"type": "h2", "text": "Handling"},
+        {"type": "p", "text": "The previous edition used TLP:WHITE. FIRST TLP 2.0 replaced TLP:WHITE with <b>TLP:CLEAR</b>; this edition uses the current label in the header and footer of every report page [6]."},
+        {"type": "h2", "text": "Contents"},
+        {"type": "contents"}
+      ]
+    },
+    {
+      "number": "2",
+      "title": "Scope, Methodology and Evidence Model",
+      "items": [
+        {"type": "p", "text": "The original 17-page report mixed three kinds of evidence: family-wide vendor descriptions, sample-specific artifacts and later-variant observations. This revision preserves the technical evidence while making those scopes explicit. Microsoft and F-Secure are used as primary behavioral references; Unit 42 supplies the modern-era 2015-2019 prevalence study; MalwareBazaar and Malware-Traffic-Analysis.net anchor two representative hashes [1][2][5][7][8]."},
+        {"type": "callout", "kind": "info", "title": "Evidence model", "text": "<b>Sample-specific:</b> hashes and observations tied to one collected executable. <b>Family-wide:</b> behavior described across MyDoom variants. <b>Variant-specific:</b> behavior such as a particular backdoor port or DDoS target. <b>Analyst-derived:</b> ATT&CK mappings and detection correlations created from the documented behavior."},
+        {"type": "h2", "text": "What was corrected"},
+        {"type": "table", "widths": [65, 107], "rows": [
+          ["Previous wording", "Revision"],
+          ["TLP:WHITE", "Updated to TLP:CLEAR under FIRST TLP 2.0."],
+          ["1.1% described as a 2025 statistic", "Reframed as Unit 42 telemetry from 2015-2018 and Jan-Jun 2019."],
+          ["$38-50B presented as a precise damage value", "Reframed as a widely cited historical estimate with methodology caveat."],
+          ["Family and variant artifacts blended together", "Each IOC and behavior now carries scope/confidence context."],
+          ["Open port treated too close to proof of compromise", "Port data is treated as a triage signal requiring correlation."]
+        ]}
+      ]
+    },
+    {
+      "number": "3",
+      "title": "Historical Context and Family Profile",
+      "items": [
+        {"type": "p", "text": "MyDoom appeared in January 2004 and rapidly became one of the defining mass-mailing worm incidents of the era. Microsoft describes Win32/Mydoom as a family of mass-mailing worms that spread by email, with some variants also using peer-to-peer networks; the family includes backdoor and denial-of-service functionality [1]."},
+        {"type": "p", "text": "The original outbreak used social-engineering themes that resembled mail-delivery failures and technical error notifications. That design helped recipients rationalize the presence of an executable or archived attachment. Historical accounts also document the hidden string 'Andy; I'm just doing my job, nothing personal, sorry'; attribution and motive remain less certain than the technical behavior."},
+        {"type": "figure", "key": "p2_1", "caption": "Historical/context image preserved from the original report.", "max_h": 78},
+        {"type": "table", "widths": [44, 128], "rows": [
+          ["Attribute", "Assessment"],
+          ["Family", "Win32/Mydoom / W32.Mydoom@mm / Novarg and related aliases"],
+          ["Primary propagation", "Mass-mailing via email attachments"],
+          ["Secondary propagation", "Kazaa/P2P in documented variants"],
+          ["Host impact", "Persistence, backdoor installation, secondary-payload capability"],
+          ["Network impact", "SMTP fan-out; variant-specific proxy/backdoor and HTTP DDoS"],
+          ["Historical platform", "Windows systems contemporary to the 2004 outbreak and later legacy environments"]
+        ]}
+      ]
+    },
+    {
+      "number": "4",
+      "title": "Infection and Propagation Lifecycle",
+      "items": [
+        {"type": "diagram"},
+        {"type": "h2", "text": "4.1 Email delivery and social engineering"},
+        {"type": "p", "text": "Historical MyDoom.A reporting documents attachment names such as document, readme, doc, text, file, data, test, message and body, combined with executable or archive extensions including PIF, SCR, EXE, CMD, BAT and ZIP. Double-extension examples that hide the true executable type are a classic masquerading pattern [2]."},
+        {"type": "callout", "kind": "good", "title": "Detection takeaway", "text": "A mail gateway can catch some historical artifacts, but endpoint and network correlation is more durable: executable attachment -> user execution -> new system-directory file -> persistence write -> SMTP fan-out."},
+        {"type": "h2", "text": "4.2 Address harvesting and SMTP engine"},
+        {"type": "p", "text": "The worm harvests email addresses from local files and uses those addresses to propagate. Microsoft identifies address collection and email propagation as primary family behavior [1]. Historical analyses describe direct SMTP activity rather than dependence on a local mail client, producing a valuable network signal: a workstation initiating many SMTP sessions toward many external mail servers."},
+        {"type": "figure", "key": "p5_1", "caption": "Original report evidence associated with file-system scanning / address harvesting.", "max_h": 80},
+        {"type": "h2", "text": "4.3 Exclusion logic"},
+        {"type": "p", "text": "The historical sample logic includes hard-coded exclusions intended to avoid selected addresses or organizations. These strings are useful static-analysis context, but are weaker standalone enterprise detections because variant sets differ."},
+        {"type": "figure", "key": "p6_1", "caption": "Original report evidence: hard-coded exclusion logic.", "max_h": 63},
+        {"type": "figure", "key": "p6_2", "caption": "Original report evidence: excluded username/recipient logic.", "max_h": 55},
+        {"type": "h2", "text": "4.4 P2P propagation"},
+        {"type": "p", "text": "Microsoft documents variants that copy themselves into the Kazaa shared directory, whose location is obtained from the registry value <font name='ReportMono'>HKCU\\Software\\Kazaa\\Transfer\\DlDir0</font> [1]. Deceptive filenames were chosen to resemble popular software or cracks, increasing the chance of execution by another user."},
+        {"type": "figure", "key": "p7_1", "caption": "Original report evidence: P2P/Kazaa lure-name list.", "max_h": 80}
+      ]
+    },
+    {
+      "number": "5",
+      "title": "Static / Reverse-Engineering Evidence",
+      "items": [
+        {"type": "p", "text": "The representative sample identified by SHA-256 <font name='ReportMono'>fff0ccf5feaf5d46b295f770ad398b6d572909b00e2b8bcd1b1c286c70cd9151</font> is catalogued by MalwareBazaar as MyDoom and is reported as a small PE executable with UPX-related intelligence [7]. This hash is a representative sample identifier, not a universal family hash."},
+        {"type": "table", "widths": [58, 114], "rows": [
+          ["Observation", "Defensive meaning"],
+          ["PE executable / compact size", "Consistent with historical mail-attachment deployment; file size alone is not identifying."],
+          ["UPX packing in documented samples", "Maps cleanly to software packing and can guide static triage, but UPX is also legitimate software."],
+          ["ROT13-obfuscated strings in historical reporting", "Useful for understanding why plain-string inspection may miss configuration data."],
+          ["SMTP strings / Winsock API usage", "Supports propagation and backdoor hypotheses when correlated with other family artifacts."]
+        ]},
+        {"type": "callout", "kind": "warn", "title": "Do not overfit", "text": "A high-quality family rule should require multiple artifacts. Matching UPX, a single SMTP string or one filename is too broad. The included YARA rule therefore combines several historically documented strings and also provides an exact representative-sample hash rule."}
+      ]
+    },
+    {
+      "number": "6",
+      "title": "Installation, Persistence and Backdoor",
+      "items": [
+        {"type": "h2", "text": "6.1 Run-key persistence"},
+        {"type": "p", "text": "Microsoft documents creation of a value under either the HKLM or HKCU Windows Run key to start the worm with Windows [1]. F-Secure documents MyDoom.A copying itself as <font name='ReportMono'>taskmon.exe</font> and creating a <font name='ReportMono'>TaskMon</font> Run value [2]."},
+        {"type": "figure", "key": "p9_1", "caption": "Original report evidence: Run-key persistence routine.", "max_h": 80},
+        {"type": "figure", "key": "p9_2", "caption": "Original report evidence: infection-state / marker check.", "max_h": 70},
+        {"type": "h2", "text": "6.2 Backdoor DLL and COM persistence"},
+        {"type": "p", "text": "Microsoft documents a backdoor Trojan stored in Windows/system directories and CLSID <font name='ReportMono'>InProcServer32</font> values redirected to the backdoor DLL, causing Explorer.exe to load it after restart [1]. F-Secure identifies <font name='ReportMono'>shimgapi.dll</font> as the MyDoom.A backdoor component [2]. This behavior maps well to modern COM-hijacking detection logic even though the malware predates ATT&CK."},
+        {"type": "h2", "text": "6.3 TCP backdoor"},
+        {"type": "p", "text": "F-Secure reports that MyDoom.A sequentially tests TCP ports 3127 through 3198 and listens on the first available port. The backdoor can act as a TCP proxy and can receive and execute an additional executable [2]. This report deliberately stops at the defensive behavior description; it does not document the command protocol or provide interaction tooling."},
+        {"type": "figure", "key": "p11_1", "caption": "Original report evidence: socket/backdoor initialization.", "max_h": 80},
+        {"type": "figure", "key": "p11_2", "caption": "Original report code fragment retained as technical evidence.", "max_h": 35},
+        {"type": "callout", "kind": "danger", "title": "Port 3127 is a pivot, not a verdict", "text": "A listener on TCP/3127 is suspicious in the right legacy context, but an open port alone cannot identify MyDoom. Confirm process ownership, executable hash, persistence keys, file artifacts and surrounding SMTP activity."}
+      ]
+    },
+    {
+      "number": "7",
+      "title": "Network Behavior and Hunting",
+      "items": [
+        {"type": "h2", "text": "7.1 SMTP fan-out"},
+        {"type": "p", "text": "A particularly durable hunting signal is direct outbound SMTP from an endpoint that is not an authorized mail relay. Malware-Traffic-Analysis.net documented a 2018 MyDoom infection with multiple SMTP/25 connections and attempts to TCP/1042 [8]. This is stronger when paired with many destinations, repeated MX lookups and a suspicious local process."},
+        {"type": "h2", "text": "7.2 Backdoor traffic"},
+        {"type": "p", "text": "Historical MyDoom.A backdoor activity centers on 3127-3198/TCP, while selected later variants use other ports such as 1042. Because ports are variant-specific and reusable by benign software, network detections should preserve context rather than hard-code an infection verdict."},
+        {"type": "h2", "text": "7.3 DDoS behavior"},
+        {"type": "p", "text": "F-Secure documents the MyDoom.A payload launching 64 threads that repeatedly request the root page of the SCO website roughly once per second from each infected machine [2]. In ATT&CK terms, this is an example of direct network flood behavior. Historical target domains should be preserved as context, not treated as current malicious infrastructure."},
+        {"type": "figure", "key": "p11_3", "caption": "Original report evidence: DDoS thread / HTTP flood routine.", "max_h": 80},
+        {"type": "table", "widths": [43, 88, 41], "rows": [
+          ["Hunt", "Signal", "Confidence when isolated"],
+          ["SMTP fan-out", "Endpoint initiates many TCP/25 sessions to many mail servers", "Medium"],
+          ["MX burst", "High-volume DNS MX lookups from a non-mail endpoint", "Low-Medium"],
+          ["Legacy backdoor port", "Listening or contacted 3127-3198/TCP", "Low"],
+          ["1042/TCP", "Variant-era network activity correlated with MyDoom artifacts", "Low"],
+          ["Behavior chain", "File artifact + persistence + SMTP/network signal", "High"]
+        ]}
+      ]
+    },
+    {
+      "number": "8",
+      "title": "Variant Matrix",
+      "items": [
+        {"type": "p", "text": "The family name spans multiple variants. The following table deliberately separates historically reported differences rather than presenting every artifact as universal."},
+        {"type": "table", "widths": [24, 105, 43], "rows": [
+          ["Variant", "Documented behavior", "Scope note"],
+          ["MyDoom.A", "Mass mailing, Kazaa propagation, TaskMon persistence, shimgapi.dll backdoor; first available TCP port 3127-3198; SCO DDoS payload.", "Strong historical documentation [2]"],
+          ["MyDoom.B", "Adds Microsoft as a DDoS target and interferes with access to security-vendor sites in historical reporting.", "Variant-specific; do not apply B-only artifacts to A [4]"],
+          ["MyDoom.L", "Microsoft documents a later variant with backdoor activity on TCP/1042.", "Later family branch [3]"],
+          ["MyDoom.M", "F-Secure documents search-engine-assisted address harvesting and a TCP/1034 backdoor in a later 2004 variant.", "Later family branch [18]"],
+          ["Other descendants", "Family naming diverges across vendors; file/process names and ports vary.", "Require sample-specific validation"]
+        ]}
+      ]
+    },
+    {
+      "number": "9",
+      "title": "MITRE ATT&CK Mapping",
+      "items": [
+        {"type": "callout", "kind": "info", "title": "Mapping status", "text": "This is an analyst-derived mapping of documented MyDoom behavior to the current Enterprise ATT&CK taxonomy. It is not presented as an official MITRE MyDoom software entry."},
+        {"type": "table", "widths": [55, 91, 26], "rows": [
+          ["Behavior", "Technique", "Confidence"],
+          ["Malicious email attachment", "T1566.001 - Spearphishing Attachment*", "High"],
+          ["User opens executable attachment", "T1204.002 - User Execution: Malicious File", "High"],
+          ["Double file extension", "T1036.007 - Masquerading: Double File Extension", "High"],
+          ["UPX-packed sample", "T1027.002 - Software Packing", "High"],
+          ["Search local files for addresses", "T1083 - File and Directory Discovery", "Medium"],
+          ["Run-key persistence", "T1547.001 - Registry Run Keys / Startup Folder", "High"],
+          ["Registry modifications", "T1112 - Modify Registry", "High"],
+          ["CLSID InProcServer32 redirection", "T1546.015 - Component Object Model Hijacking", "High"],
+          ["Receive additional executable", "T1105 - Ingress Tool Transfer", "High"],
+          ["Victim used as traffic relay", "T1090 - Proxy", "High"],
+          ["HTTP DDoS", "T1498.001 - Direct Network Flood", "High"]
+        ]},
+        {"type": "small", "text": "* ATT&CK names T1566.001 'Spearphishing Attachment', while MyDoom is famous for broad mass-mail campaigns. ATT&CK's parent Phishing technique explicitly recognizes non-targeted malware-spam campaigns; the sub-technique is used here to describe the attachment delivery mechanism. Full rationale is in docs/ATTACK_MAPPING.md."}
+      ]
+    },
+    {
+      "number": "10",
+      "title": "IOC and Detection Pack",
+      "items": [
+        {"type": "p", "text": "The repository now ships machine-readable IOC data plus defensive detection rules. The IOC set explicitly labels representative-sample, historical-family and variant-specific scope so analysts do not turn one historical artifact into an over-broad verdict."},
+        {"type": "table", "widths": [24, 99, 49], "rows": [
+          ["Type", "Value", "Scope / confidence"],
+          ["SHA-256", "fff0ccf5feaf5d46b295f770ad398b6d572909b00e2b8bcd1b1c286c70cd9151", "Representative sample / High [7]"],
+          ["MD5", "53df39092394741514bc050f3d6a06a9", "Same sample / High [7]"],
+          ["SHA-1", "f91a4d7ac276b8e8b7ae41c22587c89a39ddcea5", "Same sample / High [7]"],
+          ["SHA-256", "868289da1cf8aba7c2e9c38028accdfd989ef59cde9fc733543dff9fc4ce5826", "2018 observed sample / High [8]"],
+          ["File", "taskmon.exe", "MyDoom.A historical / High [2]"],
+          ["File", "shimgapi.dll", "Backdoor component / High [1][2]"],
+          ["Registry", "...\\Run\\TaskMon", "MyDoom.A persistence / High [2]"],
+          ["Registry", "CLSID ... \\InProcServer32 -> shimgapi.dll", "Family persistence / High [1]"],
+          ["Network", "3127-3198/TCP", "MyDoom.A backdoor range / High [2]"],
+          ["Network", "1042/TCP", "Selected later variants / Medium [3][8]"]
+        ]},
+        {"type": "h2", "text": "10.1 YARA"},
+        {"type": "p", "text": "<font name='ReportMono'>detection/mydoom_family.yar</font> includes an exact SHA-256 rule for the representative sample and a second multi-artifact family triage rule. The latter intentionally requires multiple strings to reduce false positives from generic UPX or SMTP artifacts."},
+        {"type": "h2", "text": "10.2 Sigma"},
+        {"type": "p", "text": "The Sigma pack covers Run-key persistence, COM persistence pointing to shimgapi.dll, system-directory file artifacts and SMTP behavior from suspicious legacy process names. Rules are marked experimental because telemetry schemas differ by EDR/SIEM implementation."},
+        {"type": "h2", "text": "10.3 Machine-readable IOC data"},
+        {"type": "p", "text": "<font name='ReportMono'>iocs/iocs.json</font> and <font name='ReportMono'>iocs/iocs.csv</font> provide confidence, scope and source context for automation and hunting workflows."}
+      ]
+    },
+    {
+      "number": "11",
+      "title": "Incident-Response Playbook",
+      "items": [
+        {"type": "table", "widths": [33, 139], "rows": [
+          ["Phase", "Recommended defensive action"],
+          ["Triage", "Confirm whether multiple indicators agree. Identify process, file path, hash and network ownership before declaring infection."],
+          ["Containment", "If evidence is strong, isolate the endpoint and block unauthorized direct SMTP from user workstations."],
+          ["Collection", "Acquire suspicious files, persistence keys, process tree, listening sockets, DNS/MX activity and SMTP connection history."],
+          ["Hunt", "Search environment-wide for representative hashes, taskmon/shimgapi artifacts, Run/CLSID modifications and SMTP fan-out."],
+          ["Remediation", "Remove/reimage according to policy because a backdoor may have introduced additional malware. Do not assume deleting one file is sufficient."],
+          ["Recovery", "Reset affected credentials where appropriate, validate mail/network controls, patch legacy systems and monitor for recurrence."]
+        ]},
+        {"type": "callout", "kind": "good", "title": "Best modern control", "text": "For current enterprise environments, one of the strongest preventive controls against the original propagation model is to prevent ordinary workstations from initiating direct outbound SMTP/25, while maintaining modern email attachment scanning and endpoint protection."}
+      ]
+    },
+    {
+      "number": "12",
+      "title": "Modern Relevance and Data Quality",
+      "items": [
+        {"type": "p", "text": "Unit 42's 2019 study is the strongest source used here for modern-era prevalence. Across 2015-2018, MyDoom averaged about 1.1% of emails in their dataset that contained malware attachments; for January-June 2019, the figure was also 1.1%. The same research recorded tens of thousands of MyDoom samples per month and noted that polymorphism produced many unique hashes [5]."},
+        {"type": "callout", "kind": "warn", "title": "Important correction", "text": "Those numbers do <b>not</b> establish a 1.1% share in 2025 or 2026. Modern malware repositories and sandboxes still contain and re-analyze MyDoom samples, but this report does not claim a current global prevalence rate without a comparable contemporary telemetry study."},
+        {"type": "figure", "key": "p14_1", "caption": "Historical/context image preserved from the original report.", "max_h": 78},
+        {"type": "p", "text": "The exact representative sample used in this repository is present in MalwareBazaar with MyDoom tagging and multiple intelligence-provider detections [7]. This shows that the sample remains available for defensive research; it should not be misread as evidence of a fresh global outbreak."},
+        {"type": "p", "text": "Historical impact estimates around $38B are widely repeated, including in later security-industry retrospectives. Because the methodology behind early cyber-loss estimates is difficult to audit, this report treats the number as a historical estimate rather than an exact financial fact."}
+      ]
+    },
+    {
+      "number": "13",
+      "title": "Limitations and Confidence",
+      "items": [
+        {"type": "table", "widths": [62, 110], "rows": [
+          ["Limitation", "Mitigation in this edition"],
+          ["Vendor naming differs across MyDoom variants", "Artifacts are labeled family-wide, variant-specific or representative-sample."],
+          ["Historical reports occasionally disagree on names, ports or dates", "High-impact claims are anchored to Microsoft/F-Secure; ambiguous details are qualified."],
+          ["Original evidence images do not prove every textual claim", "Images are retained as evidence/context and are not used as sole attribution."],
+          ["ATT&CK did not exist during the 2004 outbreak", "Mapping is explicitly analyst-derived and behavior-based."],
+          ["Open ports and filenames are reusable", "Detection guidance emphasizes correlation and confidence."],
+          ["Modern prevalence changes over time", "2019 telemetry is dated correctly; no unsupported 2025/2026 prevalence number is asserted."]
+        ]},
+        {"type": "h2", "text": "Confidence vocabulary"},
+        {"type": "p", "text": "<b>High:</b> supported by multiple authoritative or sample-specific sources. <b>Medium:</b> plausible and supported, but variant/scope details can change. <b>Low:</b> useful triage hypothesis that requires independent confirmation."}
+      ]
+    },
+    {
+      "number": "14",
+      "title": "References",
+      "items": [
+        {"type": "references"},
+        {"type": "callout", "kind": "good", "title": "Repository artifacts", "text": "The PDF is only one part of the deliverable. See <b>detection/</b>, <b>iocs/</b>, <b>docs/ATTACK_MAPPING.md</b> and <b>docs/DETECTION.md</b> for reusable defensive content."}
+      ]
+    }
+  ],
+  "references": [
+    "[1] Microsoft Security Intelligence - Win32/Mydoom threat description. https://www.microsoft.com/en-us/wdsi/threats/malware-encyclopedia-description?name=Win32%2FMydoom",
+    "[2] F-Secure - Worm:W32/Mydoom / Novarg historical analysis. https://www.f-secure.com/v-descs/novarg",
+    "[3] Microsoft Security Intelligence - Worm:Win32/Mydoom.L@mm (TCP/1042 variant). https://www.microsoft.com/en-us/wdsi/threats/malware-encyclopedia-description?Name=Worm%3AWin32%2FMydoom.L%40mm",
+    "[4] F-Secure - Mydoom.B historical analysis. https://www.f-secure.com/v-descs/mydoom-b",
+    "[5] Palo Alto Networks Unit 42 - MyDoom Still Active in 2019. https://unit42.paloaltonetworks.com/mydoom-still-active-in-2019/",
+    "[6] FIRST - Traffic Light Protocol (TLP) Version 2.0. https://www.first.org/tlp/",
+    "[7] MalwareBazaar - SHA256 fff0ccf5feaf5d46b295f770ad398b6d572909b00e2b8bcd1b1c286c70cd9151. https://bazaar.abuse.ch/sample/fff0ccf5feaf5d46b295f770ad398b6d572909b00e2b8bcd1b1c286c70cd9151/",
+    "[8] Malware-Traffic-Analysis.net - 2018-12-19, MyDoom malspam and network traffic. https://www.malware-traffic-analysis.net/2018/12/19/index.html",
+    "[9] MITRE ATT&CK - Phishing / T1566 and T1566.001. https://attack.mitre.org/techniques/T1566/",
+    "[10] MITRE ATT&CK - User Execution: Malicious File / T1204.002. https://attack.mitre.org/techniques/T1204/002/",
+    "[11] MITRE ATT&CK - Double File Extension / T1036.007. https://attack.mitre.org/techniques/T1036/007/",
+    "[12] MITRE ATT&CK - Software Packing / T1027.002. https://attack.mitre.org/techniques/T1027/002/",
+    "[13] MITRE ATT&CK - Registry Run Keys / Startup Folder / T1547.001. https://attack.mitre.org/techniques/T1547/001/",
+    "[14] MITRE ATT&CK - Modify Registry / T1112. https://attack.mitre.org/techniques/T1112/",
+    "[15] MITRE ATT&CK - Component Object Model Hijacking / T1546.015. https://attack.mitre.org/techniques/T1546/015/",
+    "[16] MITRE ATT&CK - Ingress Tool Transfer / T1105 and Proxy / T1090. https://attack.mitre.org/techniques/T1105/ ; https://attack.mitre.org/techniques/T1090/",
+    "[17] MITRE ATT&CK - Direct Network Flood / T1498.001. https://attack.mitre.org/techniques/T1498/001/",
+    "[18] F-Secure - Mydoom.M (search-engine harvesting, TCP/1034 backdoor). https://www.f-secure.com/v-descs/mydoom-m"
+  ]
+}
