@@ -2,7 +2,7 @@ name: Build malware analysis report
 
 on:
   push:
-    branches: ["feat/malware-analysis-v2"]
+    branches: ["main", "feat/malware-analysis-v2"]
   pull_request:
 
 permissions:
@@ -71,8 +71,8 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-      - name: Commit generated report on branch builds
-        if: ${{ github.event_name == 'push' }}
+      - name: Commit generated report on the feature branch
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/feat/malware-analysis-v2' }}
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
