@@ -1,0 +1,28 @@
+title: MyDoom shimgapi DLL COM Persistence Artifact
+id: 6aaea6f1-4575-4ce4-b749-e381733b9415
+status: experimental
+description: Detects registry writes that point historically abused MyDoom COM InProcServer32 values to shimgapi.dll.
+references:
+  - https://www.microsoft.com/en-us/wdsi/threats/malware-encyclopedia-description?name=Win32%2FMydoom
+  - https://www.f-secure.com/v-descs/novarg
+author: Michel-DV
+date: 2026-09-06
+tags:
+  - attack.persistence
+  - attack.t1546.015
+  - attack.t1112
+logsource:
+  category: registry_set
+  product: windows
+detection:
+  selection_clsid:
+    TargetObject|contains:
+      - '{E6FB5E20-DE35-11CF-9C87-00AA005127ED}'
+      - '{35CEC8A3-2BE6-11D2-8773-92E220524153}'
+  selection_value:
+    TargetObject|endswith: '\InProcServer32\(Default)'
+    Details|endswith: '\shimgapi.dll'
+  condition: selection_clsid and selection_value
+falsepositives:
+  - Unlikely; validate custom legacy shell-extension deployments before escalating
+level: critical
