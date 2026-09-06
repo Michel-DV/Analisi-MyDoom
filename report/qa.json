@@ -1,0 +1,75 @@
+{
+  "file": "MyDoom_Malware_Analysis_and_Detection_Report_v2.pdf",
+  "size_bytes": 17313329,
+  "page_count": 13,
+  "pages": [
+    {
+      "page": 1,
+      "text_chars": 506,
+      "blocks": 10
+    },
+    {
+      "page": 2,
+      "text_chars": 2198,
+      "blocks": 36
+    },
+    {
+      "page": 3,
+      "text_chars": 2236,
+      "blocks": 17
+    },
+    {
+      "page": 4,
+      "text_chars": 1376,
+      "blocks": 30
+    },
+    {
+      "page": 5,
+      "text_chars": 1185,
+      "blocks": 9
+    },
+    {
+      "page": 6,
+      "text_chars": 1201,
+      "blocks": 11
+    },
+    {
+      "page": 7,
+      "text_chars": 1102,
+      "blocks": 13
+    },
+    {
+      "page": 8,
+      "text_chars": 1693,
+      "blocks": 13
+    },
+    {
+      "page": 9,
+      "text_chars": 2082,
+      "blocks": 23
+    },
+    {
+      "page": 10,
+      "text_chars": 2586,
+      "blocks": 36
+    },
+    {
+      "page": 11,
+      "text_chars": 2650,
+      "blocks": 22
+    },
+    {
+      "page": 12,
+      "text_chars": 2094,
+      "blocks": 22
+    },
+    {
+      "page": 13,
+      "text_chars": 2237,
+      "blocks": 21
+    }
+  ],
+  "issues": [],
+  "contact_sheet_bytes": 79683,
+  "status": "pass"
+}
