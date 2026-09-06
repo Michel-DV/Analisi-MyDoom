@@ -1,0 +1,25 @@
+title: MyDoom Family Run Key Persistence Artifacts
+id: 8d73a7c5-9947-4c12-b805-2b8de2e5541f
+status: experimental
+description: Detects Windows Run-key value names historically associated with MyDoom-family persistence.
+references:
+  - https://www.microsoft.com/en-us/wdsi/threats/malware-encyclopedia-description?name=Win32%2FMydoom
+  - https://www.f-secure.com/v-descs/novarg
+author: Michel-DV
+date: 2026-09-06
+tags:
+  - attack.persistence
+  - attack.t1547.001
+  - attack.t1112
+logsource:
+  category: registry_set
+  product: windows
+detection:
+  selection:
+    TargetObject|endswith:
+      - '\Software\Microsoft\Windows\CurrentVersion\Run\TaskMon'
+      - '\Software\Microsoft\Windows\CurrentVersion\Run\Traybar'
+  condition: selection
+falsepositives:
+  - Legacy software using coincidentally similar value names
+level: high

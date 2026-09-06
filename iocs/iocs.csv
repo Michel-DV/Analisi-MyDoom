@@ -1,0 +1,15 @@
+type,value,scope,confidence,source,note
+sha256,fff0ccf5feaf5d46b295f770ad398b6d572909b00e2b8bcd1b1c286c70cd9151,representative-sample,high,MalwareBazaar,Representative sample documented in report
+md5,53df39092394741514bc050f3d6a06a9,representative-sample,high,MalwareBazaar,Same representative sample
+sha1,f91a4d7ac276b8e8b7ae41c22587c89a39ddcea5,representative-sample,high,MalwareBazaar,Same representative sample
+sha256,868289da1cf8aba7c2e9c38028accdfd989ef59cde9fc733543dff9fc4ce5826,2018-observed-sample,high,Malware-Traffic-Analysis.net,Observed in 2018 malspam analysis
+filename,taskmon.exe,MyDoom.A-historic,high,F-Secure,Validate path signer hash and parent process
+filename,shimgapi.dll,backdoor-component-historic,high,Microsoft + F-Secure,Historically documented backdoor DLL
+registry-value,HKLM\Software\Microsoft\Windows\CurrentVersion\Run\TaskMon,MyDoom.A-historic,high,F-Secure,Run-key persistence
+registry-value,HKCU\Software\Microsoft\Windows\CurrentVersion\Run\TaskMon,MyDoom.A-historic,high,F-Secure,Fallback Run-key persistence
+registry-key,HKCU\CLSID\{E6FB5E20-DE35-11CF-9C87-00AA005127ED}\InProcServer32,family-historic,high,Microsoft,COM persistence reference
+registry-key,HKCU\CLSID\{35CEC8A3-2BE6-11D2-8773-92E220524153}\InProcServer32,family-historic,high,Microsoft,COM persistence reference
+mutex,SwebSipcSmtxSO,MyDoom.A-historic,medium,F-Secure,Final character differs in some secondary renderings
+network,3127-3198/tcp,MyDoom.A-backdoor,high,F-Secure,First available port selected; open port is not standalone proof
+network,1042/tcp,selected-later-variants,medium,Microsoft + Malware-Traffic-Analysis.net,Variant-specific
+network-behavior,high-fan-out outbound SMTP/25,mass-mailing-behavior,medium,Microsoft + Malware-Traffic-Analysis.net,Correlate with unusual workstation process and attachment activity
