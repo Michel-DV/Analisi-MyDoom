@@ -1,0 +1,26 @@
+title: MyDoom Family Legacy File Artifacts
+id: 831b4fda-fb57-48f8-b7ac-c4f1efc9fd58
+status: experimental
+description: Detects creation of well-documented MyDoom-family filenames in Windows system directories.
+references:
+  - https://www.microsoft.com/en-us/wdsi/threats/malware-encyclopedia-description?name=Win32%2FMydoom
+  - https://www.f-secure.com/v-descs/novarg
+author: Michel-DV
+date: 2026-09-06
+tags:
+  - attack.persistence
+  - attack.t1036
+logsource:
+  category: file_event
+  product: windows
+detection:
+  selection:
+    TargetFilename|endswith:
+      - '\Windows\System32\taskmon.exe'
+      - '\Windows\System32\shimgapi.dll'
+      - '\Windows\System\taskmon.exe'
+      - '\Windows\System\shimgapi.dll'
+  condition: selection
+falsepositives:
+  - Rare filename collision on legacy software; verify signer, hash and parent process
+level: high
