@@ -1,0 +1,114 @@
+{
+  "schema_version": "1.0",
+  "family": "MyDoom",
+  "generated": "2026-09-06",
+  "handling": "TLP:CLEAR",
+  "scope_note": "This dataset combines representative sample identifiers with historically documented family artifacts. Family variants differ; not every indicator applies to every sample.",
+  "indicators": [
+    {
+      "type": "sha256",
+      "value": "fff0ccf5feaf5d46b295f770ad398b6d572909b00e2b8bcd1b1c286c70cd9151",
+      "scope": "representative-sample",
+      "confidence": "high",
+      "source": "MalwareBazaar",
+      "source_url": "https://bazaar.abuse.ch/sample/fff0ccf5feaf5d46b295f770ad398b6d572909b00e2b8bcd1b1c286c70cd9151/"
+    },
+    {
+      "type": "md5",
+      "value": "53df39092394741514bc050f3d6a06a9",
+      "scope": "representative-sample",
+      "confidence": "high",
+      "source": "MalwareBazaar",
+      "source_url": "https://bazaar.abuse.ch/sample/fff0ccf5feaf5d46b295f770ad398b6d572909b00e2b8bcd1b1c286c70cd9151/"
+    },
+    {
+      "type": "sha1",
+      "value": "f91a4d7ac276b8e8b7ae41c22587c89a39ddcea5",
+      "scope": "representative-sample",
+      "confidence": "high",
+      "source": "MalwareBazaar",
+      "source_url": "https://bazaar.abuse.ch/sample/fff0ccf5feaf5d46b295f770ad398b6d572909b00e2b8bcd1b1c286c70cd9151/"
+    },
+    {
+      "type": "sha256",
+      "value": "868289da1cf8aba7c2e9c38028accdfd989ef59cde9fc733543dff9fc4ce5826",
+      "scope": "2018-observed-sample",
+      "confidence": "high",
+      "source": "Malware-Traffic-Analysis.net",
+      "source_url": "https://www.malware-traffic-analysis.net/2018/12/19/index.html"
+    },
+    {
+      "type": "filename",
+      "value": "taskmon.exe",
+      "scope": "MyDoom.A-historic",
+      "confidence": "high",
+      "source": "F-Secure"
+    },
+    {
+      "type": "filename",
+      "value": "shimgapi.dll",
+      "scope": "backdoor-component-historic",
+      "confidence": "high",
+      "source": "Microsoft; F-Secure"
+    },
+    {
+      "type": "registry-value",
+      "value": "HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\TaskMon",
+      "scope": "MyDoom.A-historic",
+      "confidence": "high",
+      "source": "F-Secure"
+    },
+    {
+      "type": "registry-value",
+      "value": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\TaskMon",
+      "scope": "MyDoom.A-historic",
+      "confidence": "high",
+      "source": "F-Secure"
+    },
+    {
+      "type": "registry-key",
+      "value": "HKCU\\CLSID\\{E6FB5E20-DE35-11CF-9C87-00AA005127ED}\\InProcServer32",
+      "scope": "family-historic",
+      "confidence": "high",
+      "source": "Microsoft"
+    },
+    {
+      "type": "registry-key",
+      "value": "HKCU\\CLSID\\{35CEC8A3-2BE6-11D2-8773-92E220524153}\\InProcServer32",
+      "scope": "family-historic",
+      "confidence": "high",
+      "source": "Microsoft"
+    },
+    {
+      "type": "mutex",
+      "value": "SwebSipcSmtxSO",
+      "scope": "MyDoom.A-historic",
+      "confidence": "medium",
+      "source": "F-Secure",
+      "note": "Some secondary references render the final character as zero; verify against the exact sample."
+    },
+    {
+      "type": "tcp-port",
+      "value": "3127-3198",
+      "scope": "MyDoom.A-backdoor",
+      "confidence": "high",
+      "source": "F-Secure",
+      "note": "The backdoor selects the first available port in this range; an open port alone is not proof of infection."
+    },
+    {
+      "type": "tcp-port",
+      "value": "1042",
+      "scope": "selected-later-variants",
+      "confidence": "medium",
+      "source": "Microsoft; Malware-Traffic-Analysis.net",
+      "note": "Variant-specific; correlate with process and host artifacts."
+    },
+    {
+      "type": "network-behavior",
+      "value": "high-fan-out outbound SMTP/TCP 25 from a workstation",
+      "scope": "mass-mailing-behavior",
+      "confidence": "medium",
+      "source": "Microsoft; Malware-Traffic-Analysis.net"
+    }
+  ]
+}
