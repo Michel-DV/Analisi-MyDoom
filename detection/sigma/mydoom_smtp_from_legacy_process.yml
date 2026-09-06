@@ -1,0 +1,30 @@
+title: MyDoom-Like SMTP Activity From Legacy Worm Filename
+id: 86adfdf0-a1df-43b8-a5df-4157a1c54358
+status: experimental
+description: Detects outbound SMTP connections from process names historically associated with MyDoom variants. Intended for legacy-system hunting and lab validation.
+references:
+  - https://www.microsoft.com/en-us/wdsi/threats/malware-encyclopedia-description?name=Win32%2FMydoom
+  - https://www.malware-traffic-analysis.net/2018/12/19/index.html
+author: Michel-DV
+date: 2026-09-06
+tags:
+  - attack.initial-access
+  - attack.t1566
+logsource:
+  category: network_connection
+  product: windows
+detection:
+  selection_process:
+    Image|endswith:
+      - '\taskmon.exe'
+      - '\java.exe'
+      - '\services.exe'
+      - '\lsass.exe'
+  selection_network:
+    DestinationPort: 25
+    Initiated: 'true'
+  condition: selection_process and selection_network
+falsepositives:
+  - Legitimate Java applications or Windows services using direct SMTP
+  - Legacy mail software; correlate with file path, signer, parent process and high fan-out
+level: medium
