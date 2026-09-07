@@ -2,8 +2,9 @@ name: Build malware analysis report
 
 on:
   push:
-    branches: ["main", "feat/malware-analysis-v2"]
+    branches: [main]
   pull_request:
+    branches: [main]
 
 permissions:
   contents: read
