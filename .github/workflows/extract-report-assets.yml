@@ -1,0 +1,62 @@
+name: Extract maintained report assets
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Recover only the evidence figures from the superseded report revision
+        shell: bash
+        run: |
+          git show cb984bee165b476fb7fc21b66fe145943be44d23:"Analisi Tecnica del Malware MyDoom.pdf" > /tmp/legacy-mydoom.pdf
+          python -m pip install --disable-pip-version-check pymupdf==1.26.7
+          python - <<'PY'
+          from pathlib import Path
+          import fitz
+
+          source = Path('/tmp/legacy-mydoom.pdf')
+          target = Path('report/assets')
+          target.mkdir(parents=True, exist_ok=True)
+          doc = fitz.open(source)
+          pages = {2: 1, 5: 1, 6: 2, 7: 1, 9: 2, 11: 3, 14: 1}
+          written = []
+          for page_no, count in pages.items():
+              images = doc[page_no - 1].get_images(full=True)
+              if len(images) < count:
+                  raise SystemExit(f'page {page_no}: expected {count} images, found {len(images)}')
+              for index, image in enumerate(images[:count], start=1):
+                  info = doc.extract_image(image[0])
+                  ext = info.get('ext', 'bin')
+                  path = target / f'p{page_no}_{index}.{ext}'
+                  path.write_bytes(info['image'])
+                  written.append(path)
+          print('\n'.join(str(path) for path in written))
+          PY
+
+      - name: Commit self-contained report assets
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add report/assets
+          if git diff --cached --quiet; then
+            echo "No asset changes to commit"
+            exit 0
+          fi
+          git commit -m "report: preserve selected evidence figures as source assets"
+          git push origin HEAD:main
