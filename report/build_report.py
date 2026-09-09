@@ -19,10 +19,9 @@ from reportlab.platypus import (
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = json.loads((ROOT / 'report' / 'report_data.json').read_text(encoding='utf-8'))
-SOURCE = ROOT / 'Analisi Tecnica del Malware MyDoom.pdf'
+SOURCE_ASSETS = ROOT / 'report' / 'assets'
 OUTPUT = ROOT / 'MyDoom_Malware_Analysis_and_Detection_Report_v2.pdf'
 BUILD = ROOT / '.report_build'
-ASSETS = BUILD / 'assets'
 PREVIEW = ROOT / 'report' / 'preview_contact_sheet.b64'
 QA = ROOT / 'report' / 'qa.json'
 W, H = A4
@@ -90,11 +89,13 @@ def table(rows,widths):
     t.setStyle(TableStyle([('VALIGN',(0,0),(-1,-1),'TOP'),('GRID',(0,0),(-1,-1),.35,LINE),('BACKGROUND',(0,0),(-1,0),colors.HexColor('#EAF0F6')),('LINEBELOW',(0,0),(-1,0),1,GD),('LEFTPADDING',(0,0),(-1,-1),4),('RIGHTPADDING',(0,0),(-1,-1),4),('TOPPADDING',(0,0),(-1,-1),4),('BOTTOMPADDING',(0,0),(-1,-1),4)])); return t
 
 def source_images():
-    ASSETS.mkdir(parents=True,exist_ok=True); doc=fitz.open(SOURCE); pages={2:1,5:1,6:2,7:1,9:2,11:3,14:1}; out={}
-    for pno,count in pages.items():
-        imgs=doc[pno-1].get_images(full=True)
-        for i,img in enumerate(imgs[:count]):
-            info=doc.extract_image(img[0]); key=f'p{pno}_{i+1}'; path=ASSETS/f"{key}.{info.get('ext','png')}"; path.write_bytes(info['image']); out[key]=path
+    keys = ('p2_1','p5_1','p6_1','p6_2','p7_1','p9_1','p9_2','p11_1','p11_2','p11_3','p14_1')
+    out={}
+    for key in keys:
+        matches=sorted(SOURCE_ASSETS.glob(f'{key}.*'))
+        if not matches:
+            raise SystemExit(f'missing maintained report asset: {key}')
+        out[key]=matches[0]
     return out
 
 def figure(path,caption,max_h):
@@ -155,6 +156,12 @@ def qa(pdf):
     result={'file':pdf.name,'size_bytes':pdf.stat().st_size,'page_count':doc.page_count,'pages':pages,'issues':issues,'contact_sheet_bytes':contact(pdf),'status':'pass' if not issues else 'review'}; QA.write_text(json.dumps(result,indent=2),encoding='utf-8'); return result
 
 def main():
-    if not SOURCE.exists(): raise SystemExit(f'missing source PDF: {SOURCE}')
-    BUILD.mkdir(exist_ok=True); figs=source_images(); Doc(str(OUTPUT)).build(story(figs)); result=qa(OUTPUT); print(json.dumps(result,indent=2)); return 0
-if __name__=='__main__': raise SystemExit(main())
+    BUILD.mkdir(exist_ok=True)
+    figs=source_images()
+    Doc(str(OUTPUT)).build(story(figs))
+    result=qa(OUTPUT)
+    print(json.dumps(result,indent=2))
+    return 0
+
+if __name__=='__main__':
+    raise SystemExit(main())
