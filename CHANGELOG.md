@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.0.1 - 2026-09-09
+
+### Changed
+
+- made `MyDoom_Malware_Analysis_and_Detection_Report_v2.pdf` the single authoritative report in the repository
+- simplified the README and repository tree around the maintained v2 analysis package
+
+### Removed
+
+- removed the superseded original Italian PDF from the current tree to avoid duplicate editions, conflicting quality levels, and reader confusion
+
 ## 2.0.0 - 2026-09-06
 
 ### Added
@@ -24,7 +35,6 @@
 - reframed widely repeated financial-impact numbers as historical estimates with methodology caveats
 - rebuilt the README around malware analysis and detection engineering
 
-### Retained
+### Preserved
 
-- the original Italian 17-page report as a legacy/source edition
-- historically relevant reverse-engineering figures and screenshots where they add evidentiary value
+- historically relevant reverse-engineering figures and screenshots where they add evidentiary value, consolidated into the maintained v2 report
